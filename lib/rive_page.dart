@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:rive/rive.dart';
 
 class RivePage extends StatefulWidget {
@@ -13,13 +15,17 @@ class _RivePageState extends State<RivePage> {
   /// 1眨眼睛  3说话  5浮动
   SMIInput<double>? level;
   SMIInput<bool>? rightInput;
-  SMIInput<bool>? standInput;//动静
+  SMIInput<bool>? standInput; //动静
   SMIInput<bool>? byeInput;
   Artboard? artboard;
   late StateMachineController stateController;
+  final ImagePicker picker = ImagePicker();
+  String backgroundImagePath = "";
+  String inputImagePath = "";
+
   @override
   void initState() {
-    rootBundle.load('assets/itv-robot.riv').then((data) async {
+    rootBundle.load('assets/itv-robot-new.riv').then((data) async {
       final file = RiveFile.import(data);
       final mainArtboard = file.mainArtboard;
       final controller =
@@ -32,9 +38,9 @@ class _RivePageState extends State<RivePage> {
         byeInput = controller.findInput("bye");
 
         standInput?.value = true;
-        
+
         level?.value = 1;
-   
+
         stateController = controller;
       }
       setState(() => artboard = mainArtboard);
@@ -48,147 +54,234 @@ class _RivePageState extends State<RivePage> {
       appBar: AppBar(
         title: const Text('Rive'),
       ),
-      body: Container(
-        color: Colors.purple,
-        child: Column(
-          children: [
-            //按钮区
-            Row(
+      body: Column(
+        children: [
+          //按钮区
+          Container(
+            color: Colors.grey,
+            child: Column(
               children: [
+                Wrap(
+                  children: [
+                    ElevatedButton(
+                        onPressed: () {
+                          standInput?.value = !(standInput?.value ?? false);
+                        },
+                        child: const Text('眨眼睛')),
+                    ElevatedButton(
+                        onPressed: () {
+                          level?.value = 2;
+                        },
+                        child: const Text('说话+眨眼睛')),
+                    ElevatedButton(
+                        onPressed: () {
+                          level?.value = 5;
+                        },
+                        child: const Text('浮动')),
+                    ElevatedButton(
+                        onPressed: () {
+                          level?.value = 4;
+                        },
+                        child: const Text('说话+浮动+眨眼睛')),
+                    ElevatedButton(
+                        onPressed: () {
+                          rightInput?.value = true;
+                        },
+                        child: const Text('向右看')),
+                    ElevatedButton(
+                        onPressed: () {
+                          byeInput?.value = true;
+                        },
+                        child: const Text('再见')),
+                  ],
+                ),
 
-                ElevatedButton(
-                    onPressed: () {
-                      standInput?.value = false;
-                    },
-                    child: const Text('眨眼睛')),
-
-                ElevatedButton(
-                    onPressed: () {
-                      level?.value = 2;
-                    },
-                    child: const Text('说话+眨眼睛')),
-
-                ElevatedButton(
-                    onPressed: () {
-                      level?.value = 5;
-                    },
-                    child: const Text('浮动')),
-
-                ElevatedButton(
-                    onPressed: () {
-                      level?.value = 4;
-                    },
-                    child: const Text('说话+浮动+眨眼睛')),
-
-                ElevatedButton(
-                    onPressed: () {
-                      rightInput?.value = true;
-                    },
-                    child: const Text('向右看')),
-                ElevatedButton(
-                    onPressed: () {
-                      byeInput?.value = true;
-                    },
-                    child: const Text('再见')),
+                // 获取图片
+                Row(
+                  children: [
+                    ElevatedButton(
+                        onPressed: () async {
+                          // final image = await picker.pickImage(
+                          //     source: ImageSource.gallery);
+                          // if (image != null) {
+                          //   setState(() {
+                          //     backgroundImagePath = image.path;
+                          //   });
+                          // }
+                          setState(() {
+                            backgroundImagePath = "assets/rive_bg.png";
+                          });
+                        },
+                        child: const Text('更换背景')),
+                    ElevatedButton(
+                        onPressed: () async {
+                          // final image = await picker.pickImage(
+                          //     source: ImageSource.gallery);
+                          // if (image != null) {
+                          //   setState(() {
+                          //     inputImagePath = image.path;
+                          //   });
+                          // }
+                          setState(() {
+                            inputImagePath = "assets/green_tree.jpg";
+                          });
+                        },
+                        child: const Text('插入图片')),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Row(
+                          children: [
+                            const Text('主播位置'),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 30,
+                              child: TextField(
+                                style: const TextStyle(fontSize: 10),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  hintText: 'X',
+                                  hintStyle: TextStyle(color: Colors.grey[300]),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 30,
+                              child: TextField(
+                                style: const TextStyle(fontSize: 10),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  hintText: 'Y',
+                                  hintStyle: TextStyle(color: Colors.grey[300]),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text('scale:'),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 30,
+                              child: TextField(
+                                style: const TextStyle(fontSize: 10),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  hintText: '1.0',
+                                  hintStyle: TextStyle(color: Colors.grey[300]),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    //图片编辑
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Row(
+                          children: [
+                            const Text('图片:'),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 30,
+                              child: TextField(
+                                style: const TextStyle(fontSize: 10),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  hintText: 'X',
+                                  hintStyle: TextStyle(color: Colors.grey[300]),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 30,
+                              child: TextField(
+                                style: const TextStyle(fontSize: 10),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  hintText: 'Y',
+                                  hintStyle: TextStyle(color: Colors.grey[300]),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 30,
+                              child: TextField(
+                                style: const TextStyle(fontSize: 10),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  hintText: 'width',
+                                  hintStyle: TextStyle(color: Colors.grey[300]),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            SizedBox(
+                              width: 30,
+                              child: TextField(
+                                style: const TextStyle(fontSize: 10),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  hintText: 'height',
+                                  hintStyle: TextStyle(color: Colors.grey[300]),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
-            artboard == null
-                ? const CircularProgressIndicator()
-                : SizedBox(
-                    width: double.infinity,
-                    height: 500,
-                    child: Rive(artboard: artboard!),
-                  )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// An example showing how to drive a StateMachine via one numeric input.
-class StateMachineSkills extends StatefulWidget {
-  const StateMachineSkills({Key? key}) : super(key: key);
-
-  @override
-  _StateMachineSkillsState createState() => _StateMachineSkillsState();
-}
-
-class _StateMachineSkillsState extends State<StateMachineSkills> {
-  /// Tracks if the animation is playing by whether controller is running.
-  bool get isPlaying => _controller?.isActive ?? false;
-
-  Artboard? _riveArtboard;
-  StateMachineController? _controller;
-  SMIInput<double>? _levelInput;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Load the animation file from the bundle, note that you could also
-    // download this. The RiveFile just expects a list of bytes.
-    rootBundle.load('assets/skills.riv').then(
-      (data) async {
-        // Load the RiveFile from the binary data.
-        final file = RiveFile.import(data);
-
-        // The artboard is the root of the animation and gets drawn in the
-        // Rive widget.
-        final artboard = file.mainArtboard;
-        var controller =
-            StateMachineController.fromArtboard(artboard, 'Designer\'s Test');
-        if (controller != null) {
-          artboard.addController(controller);
-          _levelInput = controller.findInput('Level');
-        }
-        setState(() => _riveArtboard = artboard);
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey,
-      appBar: AppBar(
-        title: const Text('Skills Machine'),
-      ),
-      body: Center(
-        child: _riveArtboard == null
-            ? const SizedBox()
-            : Stack(
-                children: [
-                  Positioned.fill(
-                    child: Rive(
-                      artboard: _riveArtboard!,
-                    ),
-                  ),
-                  Positioned.fill(
-                    bottom: 100,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        ElevatedButton(
-                          child: const Text('Beginner'),
-                          onPressed: () => _levelInput?.value = 0,
-                        ),
-                        const SizedBox(width: 10),
-                        ElevatedButton(
-                          child: const Text('Intermediate'),
-                          onPressed: () => _levelInput?.value = 1,
-                        ),
-                        const SizedBox(width: 10),
-                        ElevatedButton(
-                          child: const Text('Expert'),
-                          onPressed: () => _levelInput?.value = 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+          ),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                image: backgroundImagePath.isNotEmpty
+                    ? DecorationImage(
+                        image: (kIsWeb
+                                ? NetworkImage(backgroundImagePath)
+                                : AssetImage(backgroundImagePath))
+                            as ImageProvider<Object>,
+                        fit: BoxFit.fill,
+                      )
+                    : null,
               ),
+              child: artboard == null
+                  ? const CircularProgressIndicator()
+                  : Stack(children: [
+                      Positioned(
+                        left: 0,
+                        bottom: 0,
+                        child: SizedBox(
+                          width: 300,
+                          height: 400,
+                          child: Rive(artboard: artboard!),
+                        ),
+                      ),
+                      inputImagePath.isNotEmpty
+                          ? Positioned(
+                              left: 0,
+                              top: 0,
+                              child: SizedBox(
+                                width: 300,
+                                height: 400,
+                                child: Image.asset(
+                                  inputImagePath,
+                                  fit: BoxFit.fill,
+                                ),
+                              ),
+                            )
+                          : Container()
+                    ]),
+            ),
+          )
+        ],
       ),
     );
   }
