@@ -50,8 +50,10 @@ class _RivePageState extends State<RivePage> {
   String inputImagePath = "";
   List images = [
     "assets/green_tree.jpg",
+    "assets/大山.jpeg",
     "assets/sheep.jpeg",
-    "assets/deer.jpeg"
+    "assets/deer.jpeg",
+    "assets/再见.jpeg"
   ];
   int imageSelect = 0;
   double riveDy = 0;
@@ -64,11 +66,11 @@ class _RivePageState extends State<RivePage> {
     scale: 1,
   );
   PositionInfo imagePosition =
-      PositionInfo(x: 0, y: 0, width: 400, height: 300, scale: 1);
+      PositionInfo(x: 0, y: 0, width: 420, height: 270, scale: 1);
 
   ///新闻内容
   String newsContent =
-      "今天是个好日子,疫情三年终于要结束了,沿着绿树成荫的康庄大道,开始了我的这一次说走就走旅行.来到了莫里亚蒂的乌拉尔境内的天空之城，除了和蔼和亲的莫里亚蒂人之外，#我遇到了神蒂亚戈山羊，你看它的身躯异常高大、健壮，像钢铁般的树桩一样。哇，#还有那迷失森林里的神鹿，它每一步都印着浓浓的梅花香，这一次的天空城之游毕生难忘。";
+      "今天是个好日子,疫情三年终于要结束了,沿着绿树成荫的康庄大道,开始了我的这一次说走就走旅行,..#来到了莫里亚蒂的乌拉尔境内的天空之城，除了和蔼和亲的莫里亚蒂人之外，#我遇到了神蒂亚戈山羊，你看它的身躯异常高大、健壮，像钢铁般的树桩一样,。哇 这是这是这是，#还有那迷失森林里的神鹿,它每一步都印着浓浓的梅花香,.这一次的天空城之游毕生难忘,时间差不多了,再见.";
   String subtitle = "";
   Timer? timer;
   @override
@@ -140,8 +142,11 @@ class _RivePageState extends State<RivePage> {
         li.add(PlayInfo(subTitle: element, slow: true));
       }
     }
+    li.removeLast();
+    if (li.last.subTitle.contains("再见")) {
+      li.last.end=true;
+    }
 
-    li.add(PlayInfo(subTitle: "时间差不多了,再见.",end: true));
     return li;
   }
 
@@ -383,12 +388,12 @@ class _RivePageState extends State<RivePage> {
                           timer = Timer.periodic(const Duration(seconds: 2),
                               (timer) {
                             print("tick: ${timer.tick}");
-                            if (timer.tick >= playData.length) {
+                            if (timer.tick > playData.length) {
                               timer.cancel();
                               standInput?.value = true;
                               return;
                             }
-                            PlayInfo playInfo = playData[timer.tick];
+                            PlayInfo playInfo = playData[timer.tick-1];
                             
 
                             if (playInfo.changePicture) {
@@ -406,6 +411,7 @@ class _RivePageState extends State<RivePage> {
                             });
                             if (playInfo.end) {
                               byeInput?.value = true;
+                              changePicture();
                               return;
                             }
                           });
@@ -505,7 +511,7 @@ class _RivePageState extends State<RivePage> {
 
                       //新闻内容
                       Positioned(
-                          bottom: 0,
+                          bottom: 20,
                           left: 0,
                           right: 0,
                           child: Text(
