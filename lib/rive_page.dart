@@ -25,9 +25,12 @@ class PlayInfo {
   String subTitle;
   bool changePicture;
   bool slow;
-  bool end;
+  bool bye;
   PlayInfo(
-      {required this.subTitle, this.changePicture = false, this.slow = false,this.end=false});
+      {required this.subTitle,
+      this.changePicture = false,
+      this.slow = false,
+      this.bye = false});
 }
 
 class RivePage extends StatefulWidget {
@@ -40,7 +43,7 @@ class RivePage extends StatefulWidget {
 class _RivePageState extends State<RivePage> {
   /// 1眨眼睛  3说话  5浮动
   SMIInput<double>? levelInput;
-  SMIInput<bool>? rightInput;
+  SMITrigger? rightTrigger;
   SMIInput<bool>? standInput; //动静
   SMIInput<bool>? byeInput;
   Artboard? artboard;
@@ -70,7 +73,7 @@ class _RivePageState extends State<RivePage> {
 
   ///新闻内容
   String newsContent =
-      "今天是个好日子,疫情三年终于要结束了,沿着绿树成荫的康庄大道,开始了我的这一次说走就走旅行,..#来到了莫里亚蒂的乌拉尔境内的天空之城，除了和蔼和亲的莫里亚蒂人之外，#我遇到了神蒂亚戈山羊，你看它的身躯异常高大、健壮，像钢铁般的树桩一样,。哇 这是这是这是，#还有那迷失森林里的神鹿,它每一步都印着浓浓的梅花香,.这一次的天空城之游毕生难忘,时间差不多了,再见.";
+      "今天是个好日子,疫情三年终于要结束了,沿着绿树成荫的康庄大道,开始了我的这一次说走就走旅行.#来到了莫里亚蒂的乌拉尔境内的天空之城，除了和蔼和亲的莫里亚蒂人之外，#我遇到了神蒂亚戈山羊，你看它的身躯异常高大、健壮，像钢铁般的树桩一样。哇 这是这是这是，#还有那迷失森林里的神鹿,它每一步都印着浓浓的梅花香.这一次的天空城之游毕生难忘,时间差不多了,再见.";
   String subtitle = "";
   Timer? timer;
   @override
@@ -89,7 +92,7 @@ class _RivePageState extends State<RivePage> {
       if (controller != null) {
         mainArtboard.addController(controller);
         levelInput = controller.findInput("level");
-        rightInput = controller.findInput("right");
+        rightTrigger = controller.findInput<bool>("right") as SMITrigger;
         standInput = controller.findInput("stand");
         byeInput = controller.findInput("bye");
 
@@ -107,6 +110,7 @@ class _RivePageState extends State<RivePage> {
 
   @override
   void dispose() {
+    stateController.dispose();
     timer?.cancel();
     super.dispose();
   }
@@ -119,35 +123,48 @@ class _RivePageState extends State<RivePage> {
 
   List<PlayInfo> handleText() {
     List<PlayInfo> li = [];
+    if (newsContent.isEmpty) {
+      return li;
+    }
     newsContent = newsContent.replaceAll(r'。', '.');
     newsContent = newsContent.replaceAll(r'，', ',');
     newsContent = newsContent.replaceAll(r'？', '?');
     newsContent = newsContent.replaceAll(r'！', '!');
 
-    if (!newsContent.contains('.')) {
-      newsContent = "$newsContent.";
-    }
-
     for (var element in newsContent.split('.')) {
-      if (element.contains(',')) {
-        final items = element.split(',');
-        for (var i = 0; i < items.length; i++) {
+      final items = element.split(',');
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].isNotEmpty) {
           bool changePicture = items[i].contains("#") ? true : false;
-          bool slow = (i == items.length - 1) ? true : false;
           String subTitle = items[i].replaceAll("#", "");
+          bool bye = items[i].contains("再见") ? true : false;
           li.add(PlayInfo(
-              subTitle: subTitle, changePicture: changePicture, slow: slow));
+              subTitle: subTitle, changePicture: changePicture, bye: bye));
         }
-      } else {
-        li.add(PlayInfo(subTitle: element, slow: true));
+
+        if (i == items.length - 1) {
+          //最后一个需要加. 停顿
+          li.add(PlayInfo(subTitle: "", slow: true));
+        }
       }
-    }
-    li.removeLast();
-    if (li.last.subTitle.contains("再见")) {
-      li.last.end=true;
     }
 
     return li;
+  }
+// 对音频数据处理
+  void audioHandle() {
+    double total = 20;
+    List pauseTime = [5, 8, 15];
+    List<PlayInfo> li = [];
+    for (var i = 0; i < total; i++) {
+      li.add(PlayInfo(subTitle: ""));
+      if (pauseTime.isNotEmpty) {
+        if (i == pauseTime.first - 1) {
+          li.add(PlayInfo(subTitle: "", slow: true));
+          pauseTime.removeAt(0);
+        }
+      }
+    }
   }
 
   @override
@@ -321,7 +338,7 @@ class _RivePageState extends State<RivePage> {
             child: const Text('说话+浮动+眨眼睛')),
         ElevatedButton(
             onPressed: () {
-              rightInput?.value = true;
+              rightTrigger?.fire();
             },
             child: const Text('向右看')),
         ElevatedButton(
@@ -385,7 +402,7 @@ class _RivePageState extends State<RivePage> {
                           standInput?.value = false;
                           imageSelect = 0;
                           List<PlayInfo> playData = handleText();
-                          timer = Timer.periodic(const Duration(seconds: 2),
+                          timer = Timer.periodic(const Duration(seconds: 1),
                               (timer) {
                             print("tick: ${timer.tick}");
                             if (timer.tick > playData.length) {
@@ -393,12 +410,11 @@ class _RivePageState extends State<RivePage> {
                               standInput?.value = true;
                               return;
                             }
-                            PlayInfo playInfo = playData[timer.tick-1];
-                            
+                            PlayInfo playInfo = playData[timer.tick - 1];
 
                             if (playInfo.changePicture) {
                               changePicture();
-                              rightInput?.value = true;
+                              rightTrigger?.fire();
                             }
                             if (playInfo.slow) {
                               levelInput?.value = 5;
@@ -409,7 +425,7 @@ class _RivePageState extends State<RivePage> {
                             setState(() {
                               subtitle = playInfo.subTitle;
                             });
-                            if (playInfo.end) {
+                            if (playInfo.bye) {
                               byeInput?.value = true;
                               changePicture();
                               return;
