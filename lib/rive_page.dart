@@ -1,5 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flu_rive/audio_model.dart';
+import 'package:flu_rive/player_widget.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -76,6 +80,12 @@ class _RivePageState extends State<RivePage> {
       "今天是个好日子,疫情三年终于要结束了,沿着绿树成荫的康庄大道,开始了我的这一次说走就走旅行.#来到了莫里亚蒂的乌拉尔境内的天空之城，除了和蔼和亲的莫里亚蒂人之外，#我遇到了神蒂亚戈山羊，你看它的身躯异常高大、健壮，像钢铁般的树桩一样。哇 这是这是这是，#还有那迷失森林里的神鹿,它每一步都印着浓浓的梅花香.这一次的天空城之游毕生难忘,时间差不多了,再见.";
   String subtitle = "";
   Timer? timer;
+
+  late AudioPlayer player;
+  StreamSubscription? positionSubscription;
+  late AudioModel audioModel;
+  AudioModel? audioModelOpt;
+
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -96,7 +106,7 @@ class _RivePageState extends State<RivePage> {
         standInput = controller.findInput("stand");
         byeInput = controller.findInput("bye");
 
-        standInput?.value = true;
+        standInput?.value = false;
 
         levelInput?.value = 1;
 
@@ -105,12 +115,84 @@ class _RivePageState extends State<RivePage> {
       setState(() => artboard = mainArtboard);
     });
 
+    setupAudio();
+
     super.initState();
+  }
+
+  void loadAudioJson() async {
+    final String jsonString =
+        await rootBundle.loadString('assets/audio_info_test.json');
+    audioModel = AudioModel.fromJson(jsonDecode(jsonString));
+  }
+
+  void setupAudio() {
+    player = AudioPlayer();
+    player.setSource(AssetSource('audio-128.wav'));
+    loadAudioJson();
+
+    positionSubscription = player.onPositionChanged.listen(
+      (p) => setState(() {
+        //字幕
+        List<AudioData>? audios = audioModelOpt?.data;
+
+        if (audios?.isNotEmpty == true) {
+          AudioData? firstObj = audios?.first;
+
+          if ((firstObj?.bg ?? 0) <= p.inMilliseconds &&
+              (firstObj?.ed ?? 0) >= p.inMilliseconds) {
+            subtitle = firstObj?.onebest ?? "";
+            levelInput?.value = 4;
+          } else if (audios!.length > 1 &&
+              (audios[1].bg ?? 0) <= p.inMilliseconds) {
+            audioModelOpt?.data?.removeAt(0);
+          } else {
+            //没有字幕
+            subtitle = "";
+            levelInput?.value = 5;
+          }
+        }
+      }),
+    );
+  }
+
+  void handleAudioInfo() {
+    audioModelOpt = audioModel;
+    return;
+    int index = 0;
+    int middle = 500;
+    List<AudioData> audioDataList = audioModel.data ?? [];
+    List<AudioData> audioDataListOpt = [];
+    for (var i = 0; i < audioDataList.length; i++) {
+      if (i < index || index >= audioDataList.length) {
+        continue;
+      }
+
+      AudioData firstObj = audioDataList[index];
+      if (i == audioDataList.length - 1) {
+        audioDataListOpt.add(firstObj);
+        continue;
+      }
+
+      AudioData secondObj = audioDataList[index + 1];
+      if ((secondObj.bg ?? 0) - (firstObj.ed ?? 0) > middle) {
+        audioDataListOpt.add(firstObj);
+        index = i + 1;
+      } else {
+        audioDataListOpt.add(firstObj
+          ..ed = secondObj.ed
+          ..onebest = "${firstObj.onebest}${secondObj.onebest}");
+        index = i + 2;
+      }
+    }
+    audioModelOpt = AudioModel(data: audioDataListOpt);
   }
 
   @override
   void dispose() {
     stateController.dispose();
+    positionSubscription?.cancel();
+    player.dispose();
     timer?.cancel();
     super.dispose();
   }
@@ -151,21 +233,8 @@ class _RivePageState extends State<RivePage> {
 
     return li;
   }
+
 // 对音频数据处理
-  void audioHandle() {
-    double total = 20;
-    List pauseTime = [5, 8, 15];
-    List<PlayInfo> li = [];
-    for (var i = 0; i < total; i++) {
-      li.add(PlayInfo(subTitle: ""));
-      if (pauseTime.isNotEmpty) {
-        if (i == pauseTime.first - 1) {
-          li.add(PlayInfo(subTitle: "", slow: true));
-          pauseTime.removeAt(0);
-        }
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -318,9 +387,10 @@ class _RivePageState extends State<RivePage> {
       children: [
         ElevatedButton(
             onPressed: () {
-              standInput?.value = !(standInput?.value ?? false);
+              // standInput?.value = !(standInput?.value ?? false);
+              handleAudioInfo();
             },
-            child: const Text('激活')),
+            child: const Text('恢复字幕数据')),
         ElevatedButton(
             onPressed: () {
               levelInput?.value = 2;
@@ -435,6 +505,8 @@ class _RivePageState extends State<RivePage> {
                         child: const Text("开始"))
                   ],
                 ),
+
+                PlayerWidget(player: player),
               ],
             ),
           ),

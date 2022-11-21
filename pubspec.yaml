@@ -39,6 +39,7 @@ dependencies:
   # aliyunoss_plus_flutter: ^1.0.1
   rive: ^0.9.1
   image_picker: ^0.8.6
+  audioplayers: ^1.1.1
 
 dev_dependencies:
   flutter_test:
