@@ -1,4 +1,5 @@
 import 'package:flu_rive/audio_page.dart';
+import 'package:flu_rive/live_news_page.dart';
 import 'package:flu_rive/rive_page.dart';
 import 'package:flutter/material.dart';
 
@@ -111,14 +112,22 @@ class _MyHomePageState extends State<MyHomePage> {
                   }));
                 },
                 child: const Text("跳转Rive")),
-                const Divider(),
+            const Divider(),
             ElevatedButton(
                 onPressed: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return const AudioPage();
                   }));
                 },
-                child: const Text("跳转Audio"))
+                child: const Text("跳转Audio")),
+            const Divider(),
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) {
+                    return const LiveNewsPage();
+                  }));
+                },
+                child: const Text("跳转新闻主播"))
           ],
         ),
       ),

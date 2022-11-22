@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 
 class PlayerWidget extends StatefulWidget {
   final AudioPlayer player;
-
+  final Function? onPlay;
   const PlayerWidget({
     Key? key,
     required this.player,
+    this.onPlay,
   }) : super(key: key);
 
   @override
@@ -69,6 +70,7 @@ class _PlayerWidgetState extends State<PlayerWidget> {
           children: [
             IconButton(
               key: const Key('play_button'),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
               onPressed: _isPlaying ? null : _play,
               iconSize: 48.0,
               icon: const Icon(Icons.play_arrow),
@@ -76,12 +78,14 @@ class _PlayerWidgetState extends State<PlayerWidget> {
             ),
             IconButton(
               key: const Key('pause_button'),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
               onPressed: _isPlaying ? _pause : null,
               iconSize: 48.0,
               icon: const Icon(Icons.pause),
               color: Colors.cyan,
             ),
             IconButton(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
               key: const Key('stop_button'),
               onPressed: _isPlaying || _isPaused ? _stop : null,
               iconSize: 48.0,
@@ -114,7 +118,7 @@ class _PlayerWidgetState extends State<PlayerWidget> {
                   : '',
           style: const TextStyle(fontSize: 16.0),
         ),
-        Text('State: $_audioPlayerState'),
+        // Text('State: $_audioPlayerState'),
       ],
     );
   }
@@ -144,6 +148,7 @@ class _PlayerWidgetState extends State<PlayerWidget> {
   }
 
   Future<void> _play() async {
+    widget.onPlay?.call();
     final position = _position;
     if (position != null && position.inMilliseconds > 0) {
       await player.seek(position);

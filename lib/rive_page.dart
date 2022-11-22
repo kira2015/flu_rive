@@ -80,7 +80,6 @@ class _RivePageState extends State<RivePage> {
       "今天是个好日子,疫情三年终于要结束了,沿着绿树成荫的康庄大道,开始了我的这一次说走就走旅行.#来到了莫里亚蒂的乌拉尔境内的天空之城，除了和蔼和亲的莫里亚蒂人之外，#我遇到了神蒂亚戈山羊，你看它的身躯异常高大、健壮，像钢铁般的树桩一样。哇 这是这是这是，#还有那迷失森林里的神鹿,它每一步都印着浓浓的梅花香.这一次的天空城之游毕生难忘,时间差不多了,再见.";
   String subtitle = "";
   Timer? timer;
-
   late AudioPlayer player;
   StreamSubscription? positionSubscription;
   late AudioModel audioModel;
@@ -157,8 +156,6 @@ class _RivePageState extends State<RivePage> {
   }
 
   void handleAudioInfo() {
-    audioModelOpt = audioModel;
-    return;
     int index = 0;
     int middle = 500;
     List<AudioData> audioDataList = audioModel.data ?? [];
@@ -233,8 +230,6 @@ class _RivePageState extends State<RivePage> {
 
     return li;
   }
-
-// 对音频数据处理
 
   @override
   Widget build(BuildContext context) {
