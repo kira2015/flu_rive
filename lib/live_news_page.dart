@@ -28,7 +28,7 @@ class _LiveNewsPageState extends State<LiveNewsPage> {
   Artboard? artboard;
   late StateMachineController stateController;
   String subtitle = "";
-
+  PlayerState playerState = PlayerState.stopped;
   PositionInfo robotPosition = PositionInfo(
     x: 0,
     y: 0,
@@ -79,8 +79,14 @@ class _LiveNewsPageState extends State<LiveNewsPage> {
             child: PlayerWidget(
               player: player,
               onPlay: () {
-                print("onPlay");
                 audioModelOpt = handleAudioInfo(audioModel);
+                print("onPlay");
+              },
+              onPause: () {
+                print("onPause");
+              },
+              onStop: () {
+                print("onStop");
               },
             ),
           ),
@@ -210,24 +216,31 @@ class _LiveNewsPageState extends State<LiveNewsPage> {
 
   void loadAudioJson() async {
     final String jsonString =
-        await rootBundle.loadString('assets/audio_info_test.json');
+        await rootBundle.loadString('assets/audio_info.json');
     audioModel = AudioModel.fromJson(jsonDecode(jsonString));
-    
   }
 
   void setupAudio() {
     player = AudioPlayer();
-    player.setSource(AssetSource('audio-128.wav'));
+    player.setSource(AssetSource('audio-313.wav'));
     positionSubscription = player.onPositionChanged.listen(
       startPlay,
     );
+    player.onSeekComplete.listen((_) {
+      print("onSeekComplete");
+      audioModelOpt = handleAudioInfo(audioModel);
+    });
+    player.onPlayerStateChanged.listen((event) {
+      print("onPlayerStateChanged:$event");
+      playerState = event;
+    });
   }
 
   void startPlay(Duration p) {
     //字幕
     List<AudioData>? audios = audioModelOpt?.data;
 
-    if (audios?.isNotEmpty == true) {
+    if (audios?.isNotEmpty == true && playerState == PlayerState.playing) {
       AudioData? firstObj = audios?.first;
 
       if ((firstObj?.bg ?? 0) <= p.inMilliseconds &&
@@ -242,26 +255,33 @@ class _LiveNewsPageState extends State<LiveNewsPage> {
         subtitle = "";
         levelInput?.value = 5;
       }
+    } else {
+      levelInput?.value = 5;
     }
+    setState(() {});
   }
 
-  AudioModel handleAudioInfo(AudioModel model) {
+  AudioModel handleAudioInfo(AudioModel m) {
     int index = 0;
     int middle = 500;
-    List<AudioData> audioDataList = model.data ?? [];
+    List<AudioData> audioDataList = m.data ?? [];
     List<AudioData> audioDataListOpt = [];
+    if (audioDataList.isEmpty) {
+      return m;
+    }
+
     for (var i = 0; i < audioDataList.length; i++) {
       if (i < index || index >= audioDataList.length) {
         continue;
       }
 
-      AudioData firstObj = audioDataList[index];
+      AudioData firstObj = AudioData.copy(audioDataList[index]);
       if (i == audioDataList.length - 1) {
         audioDataListOpt.add(firstObj);
         continue;
       }
 
-      AudioData secondObj = audioDataList[index + 1];
+      AudioData secondObj = AudioData.copy(audioDataList[index + 1]);
       if ((secondObj.bg ?? 0) - (firstObj.ed ?? 0) > middle) {
         audioDataListOpt.add(firstObj);
         index = i + 1;

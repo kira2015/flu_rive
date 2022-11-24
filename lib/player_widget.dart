@@ -6,10 +6,14 @@ import 'package:flutter/material.dart';
 class PlayerWidget extends StatefulWidget {
   final AudioPlayer player;
   final Function? onPlay;
+  final Function? onPause;
+  final Function? onStop;
   const PlayerWidget({
     Key? key,
     required this.player,
     this.onPlay,
+    this.onPause,
+    this.onStop,
   }) : super(key: key);
 
   @override
@@ -158,11 +162,13 @@ class _PlayerWidgetState extends State<PlayerWidget> {
   }
 
   Future<void> _pause() async {
+    widget.onPause?.call();
     await player.pause();
     setState(() => _playerState = PlayerState.paused);
   }
 
   Future<void> _stop() async {
+    widget.onStop?.call();
     await player.stop();
     setState(() {
       _playerState = PlayerState.stopped;

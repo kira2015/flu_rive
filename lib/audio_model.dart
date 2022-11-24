@@ -28,6 +28,13 @@ class AudioModel {
     data['ok'] = ok;
     return data;
   }
+  AudioModel.copy(AudioModel from)
+      : this(
+          data: from.data,
+          errNo: from.errNo,
+          failed: from.failed,
+          ok: from.ok,
+        );
 }
 
 class AudioData {
@@ -53,4 +60,11 @@ class AudioData {
     data['speaker'] = speaker;
     return data;
   }
+  AudioData.copy(AudioData from)
+      : this(
+          bg: from.bg,
+          ed: from.ed,
+          onebest: from.onebest,
+          speaker: from.speaker,
+        );
 }
