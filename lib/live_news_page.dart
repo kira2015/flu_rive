@@ -36,10 +36,11 @@ class _LiveNewsPageState extends State<LiveNewsPage> {
     height: 0,
     scale: 1,
   );
+  double dy = 56 + 120;
   PositionInfo imagePosition =
-      PositionInfo(x: 0, y: 0, width: 420, height: 270, scale: 1);
+      PositionInfo(x: 0, y: 0, width: 465, height: 270, scale: 1);
   String inputImagePath = "assets/green_tree.jpg";
-  List images = [
+  List<String> images = [
     "assets/green_tree.jpg",
     "assets/大山.jpeg",
     "assets/sheep.jpeg",
@@ -50,6 +51,8 @@ class _LiveNewsPageState extends State<LiveNewsPage> {
   @override
   void initState() {
     super.initState();
+    imagePosition.x = 386;
+    imagePosition.y = 234 - dy;
     setupAnimatedRobot();
     setupAudio();
     loadAudioJson();
@@ -110,7 +113,7 @@ class _LiveNewsPageState extends State<LiveNewsPage> {
                               onDragEnd: (detail) {
                                 setState(() {
                                   robotPosition.x = detail.offset.dx;
-                                  robotPosition.y = detail.offset.dy - 56 - 120;
+                                  robotPosition.y = detail.offset.dy - dy;
                                 });
                                 print("onDraEnd:${detail.offset}");
                               },
@@ -150,7 +153,7 @@ class _LiveNewsPageState extends State<LiveNewsPage> {
                               onDragEnd: (detail) {
                                 setState(() {
                                   imagePosition.x = detail.offset.dx;
-                                  imagePosition.y = detail.offset.dy - 56 - 120;
+                                  imagePosition.y = detail.offset.dy - dy;
                                 });
                                 print("onDraEnd:${detail.offset}");
                               },
@@ -245,7 +248,8 @@ class _LiveNewsPageState extends State<LiveNewsPage> {
 
       if ((firstObj?.bg ?? 0) <= p.inMilliseconds &&
           (firstObj?.ed ?? 0) >= p.inMilliseconds) {
-        subtitle = firstObj?.onebest ?? "";
+        String onebest = firstObj?.onebest ?? "";
+        subtitle = contentEx(onebest);
         levelInput?.value = 4;
       } else if (audios!.length > 1 &&
           (audios[1].bg ?? 0) <= p.inMilliseconds) {
@@ -293,6 +297,26 @@ class _LiveNewsPageState extends State<LiveNewsPage> {
       }
     }
     return AudioModel(data: audioDataListOpt);
+  }
+
+  String contentEx(String content) {
+    String contentOpt = content;
+    if (content.contains('<#') && content.contains('#>')) {
+      //截取<#>中间的内容
+      int start = content.indexOf("<#") + 2;
+      int end = content.indexOf("#>");
+      String tagStr = content.substring(start, end);
+      final imageIndex = int.tryParse(tagStr);
+
+      if (imageIndex != null) {
+        inputImagePath = images[imageIndex - 1];
+      }
+
+      //去除标识
+      contentOpt = content.replaceAll("<#$tagStr#>", "");
+    }
+
+    return contentOpt;
   }
 }
 
